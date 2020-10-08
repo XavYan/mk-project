@@ -24,9 +24,11 @@ mkdir -p ~/.mk-project-config
 # Añadimos la version
 cat ./version > ~/.mk-project-config/version
 
-echo "Instalamos el script ~/.mk-project-config/all en su valor por defecto..."
 
 # Creamos script all por defecto
-echo "mk-project --node --linters --parcel --gitignore --scripts --gh-pages --project-name \$1" >> ~/.mk-project-config/all
+if [ "$(cat ~/.mk-project-config/all)" == "" ]; then
+	echo "Instalamos el script ~/.mk-project-config/all en su valor por defecto..."
+	echo "mk-project --node --linters --parcel --gitignore --scripts --gh-pages --project-name \$1" >> ~/.mk-project-config/all
+fi
 
 echo "¡Se ha instalado correctamente!"
