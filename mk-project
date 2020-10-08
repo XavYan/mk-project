@@ -399,7 +399,7 @@ while [ -n "$1" ]; do
 done
 
 if [ -z "$projectname" ]; then
-	echo "No se ha indicado el nombre del proyecto. Indícalo con la opción '-f' o '--project-name', si se está usando la opción '--all' solo escribe a el nombre del proyecto después del '--all'"
+	echo "No se ha indicado el nombre del proyecto. Indícalo con la opción '-f' o '--project-name'"
 	exit -1
 fi
 
