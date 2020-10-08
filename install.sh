@@ -1,7 +1,5 @@
 #!/bin/bash
 
-version="1.0.0"
-
 echo "Instalamos el comando mk-project en /usr/local/bin..."
 
 # Cambiamos los permisos
@@ -24,7 +22,7 @@ echo "Creamos la carpeta de configuración ~/.mk-project-config..."
 mkdir -p ~/.mk-project-config
 
 # Añadimos la version
-cat $version > ~/.mk-project-config/version
+cat ./version > ~/.mk-project-config/version
 
 echo "Instalamos el script ~/.mk-project-config/all en su valor por defecto..."
 
