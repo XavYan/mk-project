@@ -19,19 +19,23 @@ Simply follow this steps:
     $ git clone https://github.com/XavYan/mk-project.git
 ```
 
-2. Change permissions of install.sh script.
+2. Change permissions of `install.sh` script.
 
 ```shell
     $ chmod +x install.sh
 ```
 
-3. Execute install.sh script with sudo.
+3. Execute `install.sh` script with sudo.
 
 ```shell
     $ sudo bash install.sh
 ```
 
-4. Perfect! Installation has been done completely!
+4. Perfect! Installation has been done completely! You can delete now the cloned repository.
+
+## Updating the script
+
+To update, simply follow installation steps using `update.sh` script instead of `install.sh`.
 
 ## Usage
 
