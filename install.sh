@@ -24,6 +24,6 @@ mkdir -p ~/.mk-project-config
 echo "Instalamos el script ~/.mk-project-config/all en su valor por defecto..."
 
 # Creamos script all por defecto
-echo "mk-project --node --linters --parcel --gitignore --scripts --gh-pages" >> ~/.mk-project-config/all
+echo "mk-project --node --linters --parcel --gitignore --scripts --gh-pages --project-name \$1" >> ~/.mk-project-config/all
 
 echo "¡Se ha instalado correctamente!"
