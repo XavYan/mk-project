@@ -1,0 +1,454 @@
+#!/bin/bash
+
+# Variables --------------------------------------------------
+
+global_config_folder=~/.mk-project-config
+global_stylelint_file=stylelintrc.global
+global_eslint_file=eslintrc.global.js
+
+assets=0
+build=0
+parcel=0
+scripts=0
+node=0
+linters=0
+git_init=0
+gitignore=0
+ghpages=0
+verbose=0
+originalPath=$(pwd)
+projectname=
+
+all_option=0
+
+#  -----------------------------------------------------------
+
+# Scripts ----------------------------------------------------
+
+start_script=
+build_script=
+deploy_script=
+clean_script=
+
+#  -----------------------------------------------------------
+
+# Signals control
+signal_error () {
+	echo -e "\e[91m[ERROR]\e[39m Ha habido una interrupción de señal"
+	echo "Abortando..."
+	cd $originalPath
+	rm -rf $projectname
+	exit -1
+}
+
+
+trap signal_error SIGINT
+trap signal_error SIGHUP
+trap signal_error SIGKILL
+trap signal_error SIGTERM
+
+
+#  -----------------------------------------------------------
+
+# Functions --------------------------------------------------
+
+error () {
+	if [ -z "$1" ]; then
+		echo -e "\e[91m[ERROR]\e[39m $1"
+		exit -1
+	fi
+	echo "Abortando..."
+	rm -rf $projectname
+}
+
+text_help () {
+	if [ -n "$1" ] && [ -n "$2" ]; then
+		printf "%-30s %-50s\n" "$1" "$2"
+	fi
+}
+
+code_info () {
+	if [ $verbose -eq 1 ]; then
+		if [ -n "$1" ]; then
+			echo -e ">>> \e[96m$1\e[39m"
+		fi
+	fi
+}
+
+text_info () {
+	if [ -n "$1" ]; then
+		echo -e "\e[32m[MK-PROJECT]\e[39m $1"
+	fi
+}
+
+help () {
+	echo "mk-project [OPTIONS..] -f projectname"
+	echo
+	echo "Crea la carpeta del proyecto con el nombre especificado. Incluye las subcarpetas src y dist. La carpeta src contiene a su vez las carpetas js y css. Se pueden crear ficheros '.stylelintrc' y '.eslintrc.js' en el directorio $global_config_folder."
+	echo
+	text_help "--assets" "Incluye la carpeta 'assets' dentro de src"
+	text_help "-b, --build" "Crea la carpeta 'build'"
+	text_help "-h, --help" "Muestra esta ayuda"
+	text_help "-f, --folder, --project-name" "Indica el nombre del proyecto"
+	text_help "-n, --node" "Prepara el proyecto para utilizar Node (requiere Node y npm)"
+	text_help "-s, --scripts" "Incluye los scripts más comunes según las opciones indicadas."
+	text_help "-l, --linters" "Instalará Stylelint y eslint. También preparará el proyecto para usar Node aunque la opción '--node' no se haya indicado"
+	text_help "-p, --parcel" "Instalará parcel. También preparará el proyecto para usar Node aunque la opción '--node' no se haya indicado"
+	text_help "-a, --all" "Ejecuta el script 'all', localizado en '~/.mk-project-config'. Si no existe, este comando actúa equivalente a las opciones '--node', '--linters', '--parcel', '--gitignore', '--scripts' y '--gh-pages'"
+	text_help "-g, --git" "Inicializa el repositorio y crear el commit de la estructura"
+	text_help "-i, --gitignore" "Crea un fichero '.gitignore' según las opciones indicadas. Esta opción es independiente de '--git'"
+	text_help "-gh, --gh-pages" "Instala el plugin gh-pages"
+	text_help "-v, --verbose" "Da más detalles durante la creación del proyecto"
+}
+
+assets () {
+	
+	text_info "Creando carpeta $projectname/src/assets..."
+	code_info "mkdir -p $projectname/src/assets"
+
+	mkdir -p $projectname/src/assets
+	if [ $? -ne 0 ]; then
+		error "No se pudo crear $projectname/src/assets"
+	fi
+}
+
+build () {
+
+	text_info "Creando carpeta $projectname/build..."
+	code_info "mkdir -p $projectname/build"
+
+	mkdir -p $projectname/build
+	if [ $? -ne 0 ]; then
+		error "No se pudo crear $projectname/build"
+	fi
+}
+
+parcel_install () {
+
+	text_info "Instalando parcel..."
+	code_info "npm install parcel"
+
+	cd $projectname
+	npm install -D parcel
+	error_number=$?
+	cd $originalPath
+	
+	if [ $error_number -ne 0 ]; then
+		error "No se pudo instalar parcel"
+	fi
+}
+
+npm_init () {
+
+	text_info "Inicializando proyecto con npm..."
+	code_info "npm init -y"
+
+	cd $projectname
+	npm init -y
+	error_number=$?
+	cd $originalPath
+
+	if [ $error_number -ne 0 ]; then
+		error "No se pudo inicializar con npm el proyecto"
+	fi
+
+	if [ $scripts -eq 1 ]; then
+
+		text_info "Añadimos los scripts en package.json..."
+
+		cp $projectname/package.json /tmp/package.json.$projectname
+
+		head -n 6 /tmp/package.json.$projectname > $projectname/package.json
+
+		clean_script="rm -rf package-lock.json dist"
+
+		if [ $parcel -eq 1 ]; then
+			start_script="parcel --port 3000 src/index.html"
+			build_script="parcel build src/index.html --public-url /$projectname"
+			clean_script="$clean_script .cache"
+		fi
+
+		if [ $build -eq 1 ]; then
+			build_script="$build_script -d build"
+			clean_script="$clean_script build"
+		fi
+
+		if [ $ghpages -eq 1 ]; then
+			deploy_script="gh-pages"
+			if [ $build -eq 1 ]; then
+				deploy_script="$deploy_script -d build"
+			else
+				deploy_script="$deploy_script -d dist"
+			fi
+		fi
+
+		echo -e "    \"start\":\"$start_script\"," >> $projectname/package.json
+		echo -e "    \"build\":\"$build_script\"," >> $projectname/package.json
+		echo -e "    \"deploy\":\"$deploy_script\"," >> $projectname/package.json
+		echo -e "    \"clean\":\"$clean_script\"," >> $projectname/package.json
+
+		tail -n -6 /tmp/package.json.$projectname >> $projectname/package.json
+
+		rm /tmp/package.json.$projectname
+	fi
+}
+
+stylelint_config () {
+	
+	text_info "Estableciendo configuración inicial de Stylelint..."
+	
+	if [ -e $global_config_folder/$global_stylelint_file ]; then
+		code_info "cp $global_config_folder/$global_stylelint_file ./.stylelintrc"
+
+		cp $global_config_folder/$global_stylelint_file ./.stylelintrc
+	else
+		text_info "No existe fichero global de stylelint, se procede a la configuración estándar"
+		code_info "\"{\" >> ./.stylelintrc"
+		code_info "\t\"extends\": \"stylelint-config-standard\" >> ./.stylelintrc"
+		code_info "\"}\" >> ./.stylelintrc"
+
+		echo "{" >> ./.stylelintrc
+		echo -e "\t\"extends\": \"stylelint-config-standard\"" >> ./.stylelintrc
+		echo "}" >> ./.stylelintrc
+	fi
+}
+
+eslint_config () {
+	
+	text_info "Estableciendo configuración inicial de eslint..."
+	
+	if [ -e $global_config_folder/$global_eslint_file ]; then
+		code_info "cp $global_config_folder/$global_eslint_file ./.eslintrc.js"
+
+		cp $global_config_folder/$global_eslint_file ./.eslintrc.js
+	else
+		text_info "No existe fichero global de eslint, se procede a la configuración habitual"
+		code_info "npx eslint --init"
+		npx eslint --init
+		if [ $? -ne 0 ]; then
+			error "Hubo un problema al inicializar la configuración de eslint"
+		fi
+	fi
+}
+
+git_init () {
+
+	# inicializamos repositorio
+	text_info "Inicializando repositorio..."
+	code_info "git init"
+	
+	cd $projectname
+	git init
+	if [ $? -ne 0 ]; then
+		cd $originalPath
+		error "No se ha podido inicializar el repositorio"
+	fi
+
+	# creamos el primer commit
+	text_info "Realizando primer commit..."
+	code_info "git add . && git commit -m \"Base estructure established\""
+
+	git add . && git commit -m "Base estructure established"
+	if [ $? -ne 0 ]; then
+		cd $originalPath
+		error "No se ha podido realizar el commit"
+	fi
+	cd $originalPath
+}
+
+gitignore () {
+	
+	text_info "Creando fichero '.gitignore'..."
+
+	if [ $node -eq 1 ]; then
+		code_info "echo -e \"# NPM modules\\\\nnode_modules\\\\n\" >> $projectname/.gitignore"
+
+		echo -e "# NPM modules\nnode_modules\n" >> $projectname/.gitignore
+	fi
+
+	if [ $parcel -eq 1 ]; then
+		code_info "echo -e \"# Parcel cache\\\\n.cache\\\\n\" >> $projectname/.gitignore"
+
+		echo -e "# Parcel cache\n.cache\n" >> $projectname/.gitignore
+	fi
+
+	code_info "echo -e \"# Development environment\\\\ndist\\\\n\" >> $projectname/.gitignore"
+
+	echo -e "# Development environment\ndist\n" >> $projectname/.gitignore
+
+	if [ $build -eq 1 ]; then
+		code_info "echo -e \"#Carpeta build\\\\nbuild\\\\n\" >> $projectname/.gitignore"
+
+		echo -e "# Carpeta build\nbuild\n" >> $projectname/.gitignore
+	fi
+}
+
+gh_pages () {
+	text_info "Instalando gh-pages..."
+	code_info "npm install -D gh-pages"
+
+	cd $projectname
+	npm install -D gh-pages
+	if [ $? -ne 0 ]; then
+		cd $originalPath
+		error "No se ha podido instalar gh-pages"
+	fi
+	cd $originalPath
+}
+
+all () {
+	if [ -e ~/.mk-project-config/all ]; then
+		bash ~/.mk-project-config/all $projectname
+	else
+		node=1
+		scripts=1
+		linters=1
+		parcel=1
+		gitignore=1
+		ghpages=1
+	fi
+	exit 0
+}
+
+#  -----------------------------------------------------------
+
+# Main code --------------------------------------------------
+if [ -z "$1" ]; then
+	help
+	exit 0
+fi
+
+while [ -n "$1" ]; do
+	case "$1" in
+		"--assets" )
+			assets=1
+			;;
+		"-b" | "--build" )
+			build=1
+			;;
+		"-h" | "--help" )
+			help
+			exit 0
+			;;
+		"-n" | "--node" )
+			node=1
+			;;
+		"-s" | "--scripts" )
+			scripts=1
+			;;
+		"-p" | "--parcel" )
+			node=1
+			parcel=1
+			;;
+		"-l" | "--linters" )
+			node=1
+			linters=1
+			;;
+		"-g" | "--git" )
+			git_init=1
+			;;
+		"-i" | "--gitignore" )
+			gitignore=1
+			;;
+		"-gh" | "--gh-pages" )
+			ghpages=1
+			;;
+		"-a" | "--all" )
+			all_option=1
+			;;
+		"-f" | "--folder" | "--project-name" )
+			shift
+			projectname=$1
+			;;
+		"-v" | "--verbose" )
+			verbose=1
+			;;
+		* )
+			echo "Error! Comando especificado incorrecto: $1"
+			exit -1
+	esac
+	shift
+done
+
+if [ -z "$projectname" ]; then
+	echo "No se ha indicado el nombre del proyecto. Indícalo con la opción '-p'"
+	exit -1
+fi
+
+if [ -e "$projectname" ]; then
+	error "El directorio $projectname ya existe!"
+fi
+
+if [ $all_option -eq 1 ]; then
+	all
+fi
+
+text_info "Creando la estrucutra inicial de $projectname..."
+code_info "mkdir -p $projectname/src/{js,css} $projectname/dist"
+
+mkdir -p $projectname/src/{js,css} $projectname/dist
+if [ $? -ne 0 ]; then
+	error "No se ha podido crear la estructura básica del proyecto"
+fi
+
+# index.html
+echo "Hello World!" >> $projectname/src/index.html
+
+# assets
+if [ $assets -eq 1 ]; then
+	assets
+fi
+
+# build folder
+if [ $build -eq 1 ]; then
+	build
+fi
+
+# npm
+if [ $node -eq 1 ]; then
+	npm_init
+fi
+
+# default linter install and configuration
+if [ $node -eq 1 ] && [ $linters -eq 1 ]; then
+	text_info "Instalando los linters de CSS y de Js para $projectname..."
+	code_info "npm install -D stylelint stylelint-config-standard eslint"
+
+	cd $projectname
+	npm install -D stylelint stylelint-config-standard eslint
+	if [ $? -ne 0 ]; then
+		cd $originalPath
+		error "Hubo un problema al installar los linters"
+	fi
+	
+	# configuracion inicial de stylelint
+	stylelint_config
+
+	# configuracion inicial de eslint
+	eslint_config
+
+	# volvemos a la posicion original
+	cd $originalPath
+fi
+
+# parcel installation
+if [ $node -eq 1 ] && [ $parcel -eq 1 ]; then
+	parcel_install
+fi
+
+# gh-pages installation
+if [ $ghpages -eq 1 ]; then
+	gh_pages
+fi
+
+# gitignore creation
+if [ $gitignore -eq 1 ]; then
+	gitignore
+fi
+
+# git initialization
+if [ $git_init -eq 1 ]; then
+	git_init
+fi
+
+text_info "Se ha creado el proyecto correctamente."
