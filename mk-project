@@ -297,15 +297,10 @@ gh_pages () {
 }
 
 all () {
-	if [ -e ~/.mk-project-config/all ]; then
-		bash ~/.mk-project-config/all $projectname
+	if [ -e $global_config_folder/all ]; then
+		bash $global_config_folder/all $projectname
 	else
-		node=1
-		scripts=1
-		linters=1
-		parcel=1
-		gitignore=1
-		ghpages=1
+		error "Debe existir el script $global_config_folder/all"
 	fi
 	exit 0
 }
