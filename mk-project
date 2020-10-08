@@ -110,6 +110,7 @@ help () {
 	text_help "-i, --gitignore" "Crea un fichero '.gitignore' según las opciones indicadas. Esta opción es independiente de '--git'"
 	text_help "-gh, --gh-pages" "Instala el plugin gh-pages"
 	text_help "-v, --verbose" "Da más detalles durante la creación del proyecto"
+	text_help "--version" "Muestra la versión del script"
 }
 
 assets () {
@@ -384,6 +385,11 @@ while [ -n "$1" ]; do
 			;;
 		"-v" | "--verbose" )
 			verbose=1
+			;;
+		"--version" )
+			script_version=$(cat ~/.mk-project-config/version)
+			text_info "Versión del script: $script_version"
+			exit 0
 			;;
 		* )
 			echo "Error! Comando especificado incorrecto: $1"
