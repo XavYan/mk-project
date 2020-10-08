@@ -237,9 +237,9 @@ eslint_config () {
 		cp $global_config_folder/$global_eslint_file ./.eslintrc.js
 
 		text_info "Instalamos dependencias de eslint..."
-		code_info "npm install -D eslint-config-standard@latest eslint@>=6.2.2 eslint-plugin-import@>=2.18.0 eslint-plugin-node@>=9.1.0 eslint-plugin-promise@>=4.2.1 eslint-plugin-standard@>=4.0.0"
+		code_info "npm install -D eslint-config-standard@latest eslint@^6.2.2 eslint-plugin-import@^2.18.0 eslint-plugin-node@^9.1.0 eslint-plugin-promise@^4.2.1 eslint-plugin-standard@^4.0.0"
 
-		npm install -D eslint-config-standard@latest eslint@>=6.2.2 eslint-plugin-import@>=2.18.0 eslint-plugin-node@>=9.1.0 eslint-plugin-promise@>=4.2.1 eslint-plugin-standard@>=4.0.0
+		npm install -D eslint-config-standard@latest eslint@^6.2.2 eslint-plugin-import@^2.18.0 eslint-plugin-node@^9.1.0 eslint-plugin-promise@^4.2.1 eslint-plugin-standard@^4.0.0
 	else
 		text_info "No existe fichero global de eslint, se procede a la configuración habitual"
 		code_info "npx eslint --init"
