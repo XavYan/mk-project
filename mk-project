@@ -2,9 +2,13 @@
 
 # Variables --------------------------------------------------
 
+number_regex='^[0-9]+$';
+
 global_config_folder=~/.mk-project-config
 global_stylelint_file=stylelintrc.global
 global_eslint_file=eslintrc.global.js
+
+parcel_port=3000
 
 assets=0
 build=0
@@ -100,7 +104,7 @@ help () {
 	text_help "-n, --node" "Prepara el proyecto para utilizar Node (requiere Node y npm)"
 	text_help "-s, --scripts" "Incluye los scripts más comunes según las opciones indicadas."
 	text_help "-l, --linters" "Instalará Stylelint y eslint. También preparará el proyecto para usar Node aunque la opción '--node' no se haya indicado"
-	text_help "-p, --parcel" "Instalará parcel. También preparará el proyecto para usar Node aunque la opción '--node' no se haya indicado"
+	text_help "-p, --parcel [PORT]" "Instalará parcel. También preparará el proyecto para usar Node aunque la opción '--node' no se haya indicado. Si se indica el argumento, se usará este puerto para publicar la web"
 	text_help "-a, --all" "Ejecuta el script 'all', localizado en '~/.mk-project-config'. Si no existe, este comando actúa equivalente a las opciones '--node', '--linters', '--parcel', '--gitignore', '--scripts' y '--gh-pages'"
 	text_help "-g, --git" "Inicializa el repositorio y crear el commit de la estructura"
 	text_help "-i, --gitignore" "Crea un fichero '.gitignore' según las opciones indicadas. Esta opción es independiente de '--git'"
@@ -172,7 +176,7 @@ npm_init () {
 		clean_script="rm -rf package-lock.json dist"
 
 		if [ $parcel -eq 1 ]; then
-			start_script="parcel --port 3000 src/index.html"
+			start_script="parcel --port $parcel_port src/index.html"
 			build_script="parcel build src/index.html --public-url /$projectname"
 			clean_script="$clean_script .cache"
 		fi
@@ -353,6 +357,10 @@ while [ -n "$1" ]; do
 		"-p" | "--parcel" )
 			node=1
 			parcel=1
+			if [[ "$2" =~ $number_regex ]]; then
+				shift
+				parcel_port=$1
+			fi
 			;;
 		"-l" | "--linters" )
 			node=1
