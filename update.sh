@@ -1,8 +1,8 @@
 #!/usr/bin/bash
 
-if [ -e /usr/local/bin/mk-project ] && [ $(cat ~/.mk-project-config/version) != $(cat ./version) ]; then
+if [ -e /usr/local/bin/mk-project ] && [ "$(cat ~/.mk-project-config/version)" != "$(cat ./version)" ]; then
 	echo "Actualizando mk-project..."
-	rm /usr/local/bin/mk-project
+	sudo rm -f /usr/local/bin/mk-project
 	bash ./install.sh 1>/dev/null
 	echo "¡Se ha actualizado correctamente!"
 else

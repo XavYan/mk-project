@@ -10,7 +10,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Movemos el script a /usr/local/bin
-mv ./mk-project /usr/local/bin/mk-project
+sudo cp ./mk-project /usr/local/bin/mk-project
 if [ $? -ne 0 ]; then
     echo "No se ha podido mover el fichero mk-project al directorio /usr/local/bin."
     exit -1
