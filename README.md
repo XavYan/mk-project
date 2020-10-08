@@ -25,7 +25,7 @@ Simply follow this steps:
     $ chmod +x install.sh
 ```
 
-3. Execute `install.sh` script with sudo. You will be asked to put password during script execution.
+3. Execute `install.sh` script **without sudo**. You will be asked to put password during script execution.
 
 ```shell
     $ bash install.sh
