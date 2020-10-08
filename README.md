@@ -6,7 +6,7 @@ This is a shell script created by Himar Manuel Barquín Carrasco, where you can 
 
 To install and use this script, you need:
 
-- NodeJS, NPM y NPX.
+- NodeJS, NPM and NPX.
 - Git.
 
 ## Installation
