@@ -25,10 +25,10 @@ Simply follow this steps:
     $ chmod +x install.sh
 ```
 
-3. Execute `install.sh` script with sudo.
+3. Execute `install.sh` script with sudo. You will be asked to put password during script execution.
 
 ```shell
-    $ sudo bash install.sh
+    $ bash install.sh
 ```
 
 4. Perfect! Installation has been done completely! You can delete now the cloned repository.

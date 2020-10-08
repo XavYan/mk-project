@@ -230,6 +230,11 @@ eslint_config () {
 		code_info "cp $global_config_folder/$global_eslint_file ./.eslintrc.js"
 
 		cp $global_config_folder/$global_eslint_file ./.eslintrc.js
+
+		text_info "Instalamos dependencias de eslint..."
+		code_info "npm install -D eslint-config-standard@latest eslint@>=6.2.2 eslint-plugin-import@>=2.18.0 eslint-plugin-node@>=9.1.0 eslint-plugin-promise@>=4.2.1 eslint-plugin-standard@>=4.0.0"
+
+		npm install -D eslint-config-standard@latest eslint@>=6.2.2 eslint-plugin-import@>=2.18.0 eslint-plugin-node@>=9.1.0 eslint-plugin-promise@>=4.2.1 eslint-plugin-standard@>=4.0.0
 	else
 		text_info "No existe fichero global de eslint, se procede a la configuración habitual"
 		code_info "npx eslint --init"
@@ -422,10 +427,10 @@ fi
 # default linter install and configuration
 if [ $node -eq 1 ] && [ $linters -eq 1 ]; then
 	text_info "Instalando los linters de CSS y de Js para $projectname..."
-	code_info "npm install -D stylelint stylelint-config-standard eslint"
+	code_info "npm install -D stylelint eslint"
 
 	cd $projectname
-	npm install -D stylelint stylelint-config-standard eslint
+	npm install -D stylelint eslint
 	if [ $? -ne 0 ]; then
 		cd $originalPath
 		error "Hubo un problema al installar los linters"
