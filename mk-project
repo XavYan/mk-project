@@ -34,11 +34,8 @@ clean_script=
 
 # Signals control
 signal_error () {
-	echo -e "\e[91m[ERROR]\e[39m Ha habido una interrupción de señal"
-	echo "Abortando..."
-	cd $originalPath
-	rm -rf $projectname
-	exit -1
+	abort
+	final_error "Ha habido una interrupción de señal"
 }
 
 
@@ -52,13 +49,23 @@ trap signal_error SIGTERM
 
 # Functions --------------------------------------------------
 
+abort () {
+	echo "Deshaciendo proyecto..."
+	cd $originalPath
+	rm -rf $projectname
+}
+
 error () {
-	if [ -z "$1" ]; then
+	if [ -n "$1" ]; then
 		echo -e "\e[91m[ERROR]\e[39m $1"
+	fi
+}
+
+final_error () {
+	if [ -n "$1" ]; then
+		error "$1"
 		exit -1
 	fi
-	echo "Abortando..."
-	rm -rf $projectname
 }
 
 text_help () {
@@ -119,7 +126,7 @@ build () {
 
 	mkdir -p $projectname/build
 	if [ $? -ne 0 ]; then
-		error "No se pudo crear $projectname/build"
+		error "No se pudo crear $projectname/build. Puedes intentar crearla manualmente."
 	fi
 }
 
@@ -134,7 +141,8 @@ parcel_install () {
 	cd $originalPath
 	
 	if [ $error_number -ne 0 ]; then
-		error "No se pudo instalar parcel"
+		abort
+		final_error "No se pudo instalar parcel"
 	fi
 }
 
@@ -149,7 +157,8 @@ npm_init () {
 	cd $originalPath
 
 	if [ $error_number -ne 0 ]; then
-		error "No se pudo inicializar con npm el proyecto"
+		abort
+		final_error "No se pudo inicializar con npm el proyecto"
 	fi
 
 	if [ $scripts -eq 1 ]; then
@@ -226,7 +235,8 @@ eslint_config () {
 		code_info "npx eslint --init"
 		npx eslint --init
 		if [ $? -ne 0 ]; then
-			error "Hubo un problema al inicializar la configuración de eslint"
+			abort
+			final_error "Hubo un problema al inicializar la configuración de eslint"
 		fi
 	fi
 }
@@ -239,21 +249,24 @@ git_init () {
 	
 	cd $projectname
 	git init
-	if [ $? -ne 0 ]; then
+	giterror=$?
+	if [ $giterror -ne 0 ]; then
 		cd $originalPath
 		error "No se ha podido inicializar el repositorio"
 	fi
 
 	# creamos el primer commit
-	text_info "Realizando primer commit..."
-	code_info "git add . && git commit -m \"Base estructure established\""
+	if [ $giterror -eq 0 ]; then
+		text_info "Realizando primer commit..."
+		code_info "git add . && git commit -m \"Base estructure established\""
 
-	git add . && git commit -m "Base estructure established"
-	if [ $? -ne 0 ]; then
+		git add . && git commit -m "Base estructure established"
+		if [ $? -ne 0 ]; then
+			cd $originalPath
+			error "No se ha podido realizar el commit"
+		fi
 		cd $originalPath
-		error "No se ha podido realizar el commit"
 	fi
-	cd $originalPath
 }
 
 gitignore () {
@@ -300,7 +313,8 @@ all () {
 	if [ -e $global_config_folder/all ]; then
 		bash $global_config_folder/all $projectname
 	else
-		error "Debe existir el script $global_config_folder/all"
+		abort
+		final_error "Debe existir el script $global_config_folder/all"
 	fi
 	exit 0
 }
@@ -370,8 +384,8 @@ if [ -z "$projectname" ]; then
 	exit -1
 fi
 
-if [ -e "$projectname" ]; then
-	error "El directorio $projectname ya existe!"
+if [ -e $projectname ]; then
+	final_error "El directorio $projectname ya existe!"
 fi
 
 if [ $all_option -eq 1 ]; then
@@ -383,7 +397,8 @@ code_info "mkdir -p $projectname/src/{js,css} $projectname/dist"
 
 mkdir -p $projectname/src/{js,css} $projectname/dist
 if [ $? -ne 0 ]; then
-	error "No se ha podido crear la estructura básica del proyecto"
+	abort
+	final_error "No se ha podido crear la estructura básica del proyecto"
 fi
 
 # index.html
