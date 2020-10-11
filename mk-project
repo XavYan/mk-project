@@ -208,6 +208,11 @@ npm_init () {
 }
 
 stylelint_config () {
+
+	text_info "Instalando dependencias de stylelint..."
+	code_info "npm install -D stylelint-config-standard"
+
+	npm install -D stylelint-config-standard
 	
 	text_info "Estableciendo configuración inicial de Stylelint..."
 	
